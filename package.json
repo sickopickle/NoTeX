@@ -1,0 +1,44 @@
+{
+  "name": "awesomeproject",
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@benjeau/react-native-draw": "^0.8.3",
+    "@react-native-async-storage/async-storage": "~1.17.3",
+    "@tensorflow-models/mobilenet": "^2.1.0",
+    "@tensorflow/tfjs": "^4.1.0",
+    "@tensorflow/tfjs-react-native": "^0.8.0",
+    "algebrite": "^1.4.0",
+    "convert-svg-to-png": "^0.6.4",
+    "expo": "~47.0.3",
+    "expo-camera": "~13.1.0",
+    "expo-gl": "~12.0.1",
+    "expo-gl-cpp": "^11.4.0",
+    "expo-status-bar": "~1.4.2",
+    "nerdamer": "^1.1.13",
+    "patch-package": "^6.5.0",
+    "postinstall-postinstall": "^2.1.0",
+    "react": "18.1.0",
+    "react-native": "0.70.5",
+    "react-native-fs": "^2.20.0",
+    "react-native-gesture-handler": "~2.8.0",
+    "react-native-mathjax": "^2.1.2",
+    "react-native-svg": "13.4.0",
+    "react-native-view-shot": "3.4.0",
+    "react-native-webview": "^11.23.1",
+    "expo-sharing": "~11.0.1",
+    "expo-media-library": "~15.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.9",
+    "typescript": "^4.8.4"
+  },
+  "private": true
+}
