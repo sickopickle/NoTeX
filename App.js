@@ -9,6 +9,7 @@ import ViewShot from "react-native-view-shot";
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import { fetch, decodeJpeg, bundleResourceIO } from '@tensorflow/tfjs-react-native';
 import * as tf from '@tensorflow/tfjs'
+import { getGamma } from '@luncheon/simplify-svg-path/index.js'
 
 var nerdamer = require('nerdamer'); 
 require('nerdamer/Algebra'); 
@@ -84,7 +85,8 @@ export default function App () {
 
   const getSVG = () => {
     console.log(canvasRef.current?.getSvg());
-    console.log(canvasRef.current?.getTimestamps())
+    console.log(canvasRef.current?.getTimestamps());
+    console.log(getGamma());
   }  
   const [type, onChangeType] = useState("solve");
   const [math, onChangeText] = useState("5x=5");

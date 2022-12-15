@@ -21,7 +21,10 @@
     "expo-camera": "~13.1.0",
     "expo-gl": "~12.0.1",
     "expo-gl-cpp": "^11.4.0",
+    "expo-media-library": "~15.0.0",
+    "expo-sharing": "~11.0.1",
     "expo-status-bar": "~1.4.2",
+    "ml-matrix": "^6.10.4",
     "nerdamer": "^1.1.13",
     "patch-package": "^6.5.0",
     "postinstall-postinstall": "^2.1.0",
@@ -32,9 +35,7 @@
     "react-native-mathjax": "^2.1.2",
     "react-native-svg": "13.4.0",
     "react-native-view-shot": "3.4.0",
-    "react-native-webview": "^11.23.1",
-    "expo-sharing": "~11.0.1",
-    "expo-media-library": "~15.0.0"
+    "react-native-webview": "^11.23.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
