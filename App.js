@@ -10,7 +10,7 @@ import * as mobilenet from '@tensorflow-models/mobilenet';
 import { fetch, decodeJpeg, bundleResourceIO } from '@tensorflow/tfjs-react-native';
 import * as tf from '@tensorflow/tfjs';
 //import './global_variables.js';
-import { getGammas } from '@benjeau/react-native-draw/src/utils.ts'
+//import { getGammas } from '@benjeau/react-native-draw/src/utils.ts'
 
 var nerdamer = require('nerdamer'); 
 require('nerdamer/Algebra'); 
@@ -87,7 +87,7 @@ export default function App () {
   const getSVG = () => {
     console.log(canvasRef.current?.getSvg());
     //console.log(canvasRef.current?.getTimestamps());
-    console.log(getGammas());
+    //console.log(getGammas());
     //console.log(getGammas());
   }  
   const [type, onChangeType] = useState("solve");
