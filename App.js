@@ -9,9 +9,8 @@ import ViewShot from "react-native-view-shot";
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import { fetch, decodeJpeg, bundleResourceIO } from '@tensorflow/tfjs-react-native';
 import * as tf from '@tensorflow/tfjs';
-//import './global_variables.js';
-//import { getGammas } from '@benjeau/react-native-draw/src/utils.ts'
 
+var collections = require('pycollections');
 var nerdamer = require('nerdamer'); 
 require('nerdamer/Algebra'); 
 require('nerdamer/Calculus'); 
@@ -20,16 +19,105 @@ require('nerdamer/Extra');
 
 import { Button, Image } from 'react-native';
 import { Canvas } from '@benjeau/react-native-draw';
-    
+
+function parse_latex(symbols, relations) {
+  let utf=0;
+  let open_brackets=0;
+  let latex_string=symbols[0];
+  for (let i=0; i<len(relations); i++) {
+    let s=symbols[i+1];
+    full_rel=relations[i];
+    let split_rel=full_rel.split('-');
+    add_symbol=true;
+    for (let rel of split_rel) {
+      if (rel == "DFS" || rel== "UFS"||rel=="OFI"||rel=="UFD"||rel=="UFL"||rel=="DFL"){
+        latex_string+="}";
+        open_brackets-=1;
+      } 
+      if (rel == "NTB"){
+        add_symbol=false;
+        if (utf) {
+          latex_string+=("}{");
+          utf-=1;
+        } else{
+          latex_string="\\frac{"+latex_string+"}{";
+          open_brackets+=1;
+        }
+      } if (rel == "UTF"){
+        latex_string+=("\\frac{"+s);
+        open_brackets+=1;
+        utf+=1;
+        add_symbol=false;
+      } if (rel=="Sub"||rel=="LB"|| rel=="DTI"){
+        latex_string+=("_{")
+        open_brackets+=1;
+      } if (rel == "Sup") {
+        latex_string+=("^{")
+        open_brackets+=1;
+      } if (rel == "Inside") {
+        latex_string+=("{");
+        open_brackets+=1;
+      } if (rel == "STS"){
+        latex_string+=("}_{");
+      } if (rel == "ITL"){
+        latex_string+=("}^{");
+      } if (rel == "Radical") {
+        latex_string+="[";
+      } if (rel == "RTI") {
+        latex_string+="]{";
+        open_brackets+=1;
+      }
+    }
+    if (add_symbol) {
+      latex_string+=s;
+    }
+  }
+  latex_string+="}".repeat(open_brackets);   
+  //latex_string+=("}")*open_brackets
+  return (latex_string);
+}
+function parse_traces(file, tolerance=15, precision_a=8, precision_b=150) {
+  a=[]
+  first = true
+  prevEnd = null
+  //mins=tf.math.reduce_min(tf.ragged.constant(list_points), axis=(0,1))
+  //maxs=tf.math.reduce_max(tf.ragged.constant(list_points), axis=(0,1))
+  //min_y=float(mins[1])
+  //max_y=float(maxs[1])
+  for (points of list_points) {
+    points=filterRepeats_Normalize(points,list_points[0][0][0],min_y,max_y,precision_b);
+    features=getFeatures(points, options(False,tolerance,precision_a));
+    if (first) {
+      a.push([[20.0, precision_b/2-features[1][1], 0.0, 0.0, 0.0, 0.0, 0]]);
+    } else {
+        dx=features[1][0]-prevEnd[0];
+        dy=features[1][1]-prevEnd[1];
+        a.push([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1]]);
+        a.push([[dx, dy, 0.0, 0.0, 0.0, 0.0, 0]]);
+        a.push([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1]]);
+        a.push([[dx, dy, math.sqrt(dx**2/9+dy**2/9), math.sqrt(dx**2/9+dy**2/9), 0.0, 0.0, 0]]);
+    }
+    a.push(features[0]);
+    prevEnd = features[2];
+    first=False;
+  }
+  a.push([[20.0, precision_b/2-prevEnd[1], 0.0, 0.0, 0.0, 0.0, 0]]);
+  return a;
+
+function convert_sequence(sequence) {
+  return (sequence.filter((element, index) => {
+    return index % 2 === 0;
+  }));
+}
+function get_latex(sequence) {
+  converted_sequence=convert_sequence(sequence);
+  return parse_latex(converted_sequence[0], converted_sequence[1]);
+}
+
 export default function App () {
-
-
-  //tensorflow
-
   const [isTfReady, setIsTfReady] = useState(false);
-  const [result, setResult] = useState('bruh');
+  const [result, setResult] = useState('Ans');
   const image = useRef(null);
-
   /*const load = async () => {
       try {
           // Load mobilenet.
@@ -53,8 +141,8 @@ export default function App () {
     
     // Start inference and show result.
     //const imageAssetPath = Image.resolveAssetSource(image);
-    //const response = await fetch(imageAssetPath.uri, {}, { isBinary: true });
-    const response = await fetch(uri, {}, { isBinary: true });
+    //const response = await fetch(imageAssetPath.uri, {}, { isBinary{ true });
+    const response = await fetch(uri, {}, { isBinary: true } );
     const imageDataArrayBuffer = await response.arrayBuffer();
     const imageData = new Uint8Array(imageDataArrayBuffer);
     const imageTensor = decodeJpeg(imageData);
@@ -68,8 +156,6 @@ export default function App () {
     }
   }
 
-
-    //
 
 
   const picRef = useRef();
@@ -87,8 +173,6 @@ export default function App () {
   const getSVG = () => {
     console.log(canvasRef.current?.getSvg());
     //console.log(canvasRef.current?.getTimestamps());
-    //console.log(getGammas());
-    //console.log(getGammas());
   }  
   const [type, onChangeType] = useState("solve");
   const [math, onChangeText] = useState("5x=5");
@@ -141,7 +225,7 @@ export default function App () {
 
     return (
       <SafeAreaView style={styles.container}>
-        <Image style={styles.preview} source={{ uri: "data:image/jpg;base64," + photo.base64 }} />
+        <Image style={styles.preview} source={{ uri: "data{image/jpg;base64," + photo.base64 }} />
         <Button title="Share" onPress={sharePic} />
         {hasMediaLibraryPermission ? <Button title="Save" onPress={savePhoto} /> : undefined}
         <Button title="Discard" onPress={() => setPhoto(undefined)} />
@@ -155,7 +239,13 @@ export default function App () {
 
 
   const solve = () => {
-    let eq = nerdamer(type+'('+math+','+vari+')').toTeX();
+    let eq;
+    try {
+      eq = nerdamer(type+'('+math+','+vari+')').toTeX();
+    } 
+    catch (err) {
+      eq = "invalid";
+    }
     expOutput('$'+eq+'$');
   }
   const toolTitle = current => {
@@ -176,7 +266,7 @@ export default function App () {
       <Text style={styles.title}>
         Paperless
       </Text>
-      <ViewShot ref={picRef} options={{ format: "jpg", quality: 0.9 }}>
+      <ViewShot ref={picRef} options={{ format:"jpg", quality: 0.9 }}>
         <Canvas
           ref={canvasRef}
           height={200}
@@ -221,18 +311,11 @@ export default function App () {
         value={vari}
       />
       <MathJax
-        html={`Answer: ${expressionOutput}`}
+        html={`Answer{ ${expressionOutput}`}
       />
       <Text>
         {result}
       </Text>
-      {/*<Camera style={styles.camera} ref = {cameraRef}>
-        <TouchableOpacity onPress={takePic}> 
-          <Image source={require("./assets/camera.png")}
-            style={{width: 100,
-            height: 100}} />
-        </TouchableOpacity>
-            </Camera>*/}
     </SafeAreaView>
   );
 }
