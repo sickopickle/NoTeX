@@ -18,11 +18,11 @@ const parse_latex = (symbols, relations) => {
   let utf=0;
   let open_brackets=0;
   let latex_string=symbols[0];
-  for (let i=0; i<len(relations); i++) {
+  for (let i=0; i<relations.length; i++) {
     let s=symbols[i+1];
-    full_rel=relations[i];
+    const full_rel=relations[i];
     let split_rel=full_rel.split('-');
-    add_symbol=true;
+    let add_symbol=true;
     for (let rel of split_rel) {
       if (rel == "DFS" || rel== "UFS"||rel=="OFI"||rel=="UFD"||rel=="UFL"||rel=="DFL"){
         latex_string+="}";
@@ -70,7 +70,7 @@ const parse_latex = (symbols, relations) => {
   //latex_string+=("}")*open_brackets
   return (latex_string);
 }
-function parse_traces(tolerance=15, precision_a=5, precision_b=250) {
+const parse_traces = (tolerance=15, precision_a=5, precision_b=250) => {
   a=[]
   first = true
   prevEnd = null
@@ -99,19 +99,22 @@ function parse_traces(tolerance=15, precision_a=5, precision_b=250) {
   a.push([[20.0, precision_b/2-prevEnd[1], 0.0, 0.0, 0.0, 0.0, 0]]);
   return a;
 }
-function convert_sequence(sequence) {
-  return (sequence.filter((element, index) => {
-    return index % 2 === 0;
-  }));
+const convert_sequence = (sequence) => {
+  return ([sequence.filter((element, index) => {
+    return index % 2 === 0 && index != 0 && index != sequence.length-1;
+  }), sequence.filter((element, index) => {
+    return index % 2 === 1;})]);
 }
-function get_latex(sequence) {
-  converted_sequence=convert_sequence(sequence);
-  return parse_latex(converted_sequence[0], converted_sequence[1]);
+const get_latex = (sequence) => {
+  const converted_sequence=convert_sequence(sequence);
+  console.log(converted_sequence);
+  return parse_latex(converted_sequence[1], converted_sequence[0]);
 }
 
 export default function App () {
   const [result, setResult] = useState('Ans');
   const [model,setModel]=useState("");
+  const [sequence, setSequence]=useState([]);
   useEffect(() => {
     async function loadModel(){
       console.log("[+] Application started")
@@ -129,6 +132,18 @@ export default function App () {
   }, []);
   const getPreds = async(input) => {
     const result = await model.predict(input).data();
+    const vocab = {0: 'Right',1: 'Sub',2: 'Sup',3: 'Inside',4: 'UTF',5: 'NTB',6: 'BTD',7: 'UFD',8: 'DFS',9: 'UFS', 10: 'OFI',11: 'DFS-NTB', 12: 'LB',13: 'UFL',14: 'STS',
+    15: 'DTI',16: 'ITL',17: 'DFL',18: 'UFS-NTB',19: 'DFS-UFD',20: 'UFS-UFD',21: 'DFS-DFS',22: 'OFI-NTB',23: 'OFI-UFD',24: 'DFS-OFI',25: 'OFI-OFI',
+    26: 'UFD-DFS',27: 'Sup-UTF',28: 'UFS-UTF',29: 'UFL-UTF',30: 'Inside-UTF',31: 'UFD-OFI',32: 'DFS-OFI-UFD',33: 'NTB-UTF',34: 'UFS-UFS',35: 'DFL-UTF',
+    36: 'UFD-UFD',37: 'UFS-OFI',38: 'UFS-DFS',39: 'Radical',40: 'RTI',41: 'RTI-UTF',42: 'Radical-UTF',43: '!',44: '(',45: ')',46: '+',
+    47: '-',48: 'frac',49: '.',50: '/',51: '0',52: '1',53: '2',54: '3',55: '4',56: '5',57: '6',58: '7',59: '8',60: '9',61: '<',62: '=',
+    63: '>', 64: 'A',65: 'B',66: 'C',67: 'COMMA',68: 'E',69: 'F',70: 'G',71: 'H',72: 'I',73: 'L',74: 'M',75: 'N',76: 'P',77: 'R',78: 'S',79: 'T',
+    80: 'V',81: 'X',82: 'Y',83: '[',84: '\\Delta',85: '\\alpha',86: '\\beta',87: '\\cos',88: '\\div',89: '\\exists',90: '\\forall',91: '\\gamma',
+    92: '\\geq',93: '\\gt',94: '\\in',95: '\\infty',96: '\\int',97: '\\lambda',98: '\\ldots',99: '\\leq',100: '\\lim',101: '\\log',102: '\\lt',103: '\\mu',
+    104: '\\neq',105: '\\phi',106: '\\pi',107: '\\pm',108: '\\prime',109: '\\rightarrow',110: '\\sigma',111: '\\sin',112: '\\sqrt',113: '\\sum',
+    114: '\\tan',115: '\\theta',116: '\\times',117: '\\{',118: '\\}',119: ']',120: 'a',121: 'b',122: 'c',123: 'd',124: 'e',125: 'f',126: 'g',
+    127: 'h',128: 'i',129: 'j',130: 'k',131: 'l',132: 'm',133: 'n',134: 'o',135: 'p',136: 'q',137: 'r',138: 's',139: 't',140: 'u',141: 'v',142: 'w',
+    143: 'x',144: 'y',145: 'z',146: '|',147: 'EOS'}
     /*const alphabet = ["Right", "Sub", "Sup", "Inside", "UTF", "NTB", "BTD", "UFD", "DFS", "UFS", "OFI", "DFS-NTB", "LB",'UFL','STS','DTI','ITL','DFL','UFS-NTB','DFS-UFD','UFS-UFD','DFS-DFS','OFI-NTB',
     'OFI-UFD','DFS-OFI','OFI-OFI','UFD-DFS','Sup-UTF','UFS-UTF','UFL-UTF','Inside-UTF','UFD-OFI','DFS-OFI-UFD','NTB-UTF','UFS-UFS','DFL-UTF','UFD-UFD',
     'UFS-OFI','UFS-DFS','Radical','RTI','RTI-UTF','Radical-UTF','!','(',')','+','-','frac','.','/','0','1','2','3','4','5','6','7','8','9',
@@ -143,19 +158,23 @@ export default function App () {
     ctc.init('fast_ctc_decode_wasm_bg.wasm');*/
     output=Array(result);
     let max_prob=0;
-    for (let i=0;i<result.length();i++) {
+    let prev_idx = -1;
+    let sequence = [];
+    let symbol_idx=0;
+    for (let i=0;i<result.length;i++) {
       if (i%149==0 && i>0){
         max_prob=0;
+        if (symbol_idx!=prev_idx && symbol_idx!=148){
+          sequence.push(vocab[symbol_idx]);
+        }
+        prev_idx=symbol_idx;
       }
       if (output[i]>max_prob){
         symbol_idx=i%149;
         max_prob=output[i];
       }
     }
-    const beamsearch = await ctc.beam_search(Array(result), alphabet, beamSize, beamCutThreshold, collapseRepeats, shape);
-    //console.log(model.weights);
-    //let result = await model.predict({'input_1': input,'StatefulPartitionedCall/model/bidirectional_2/forward_lstm_2/PartitionedCall/TensorArrayV2Stack/TensorListStack':input, 'StatefulPartitionedCall/model/bidirectional_2/backward_lstm_2/PartitionedCall/TensorArrayV2Stack/TensorListStack':input});
-    return beamsearch;
+    setSequence(sequence);
   }
 
 
@@ -221,10 +240,7 @@ export default function App () {
         allSegmentData.push([80.0, 100-startPoints[1], 0.0, 0.0, 0.0, 0.0, 0]);
         allSegmentData.push([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]);
       }
-      if (t>0) {
-        console.log(prevEnd);
-        console.log(startPoints);
-        
+      if (t>0) {      
         allSegmentData.push([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]);
         allSegmentData.push([startPoints[0]-prevEnd[0], startPoints[1]-prevEnd[1], 0.0, 0.0, 0.0, 0.0, 0])
         allSegmentData.push([0.0, 0.0, 0.0, 0,0, 0.0, 0.0, 0]);
@@ -236,7 +252,6 @@ export default function App () {
           let coords=curve[i].split(",");
           segmentData[2+i*2]=Number(coords[0])+prevX;
           segmentData[3+i*2]=Number(coords[1])+prevY;
-          //coords=[Number(coords[0]),Number(coords[1])];
         }
         const features = [segmentData[6]-segmentData[0], 
                     segmentData[7]-segmentData[1], 
@@ -251,8 +266,6 @@ export default function App () {
       prevX=curX;
       prevY=curY;
       
-      
-      //console.log(allSegmentData);
       prevEnd = endPoints.slice(0);
     }
     allSegmentData.push([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]);
@@ -304,37 +317,35 @@ export default function App () {
         }}/>
         <Button title='Solve' onPress={async() => 
         {
-          const pointdata=getPaths()[0].data;
-          const startX = pointdata[0][0][0];
-          let max_y=-1000, min_y=1000;
-          for (let i=0;i<pointdata.length;i++){
-            const stroke=pointdata[i];
-            for (let l=0;l<stroke.length;l++){
-              max_y=Math.max(stroke[l][1], max_y);
-              min_y=Math.min(stroke[l][1], min_y);
+          if (getPaths().length) {
+            const pointdata=getPaths()[0].data;
+            const startX = pointdata[0][0][0];
+            let max_y=-1000, min_y=1000;
+            for (let i=0;i<pointdata.length;i++){
+              const stroke=pointdata[i];
+              for (let l=0;l<stroke.length;l++){
+                max_y=Math.max(stroke[l][1], max_y);
+                min_y=Math.min(stroke[l][1], min_y);
+              }
             }
+            let wholepath="";
+            for (let l=0;l<pointdata.length;l++){
+              //console.log(pointdata[l]);
+              const points=filterRepeats_Normalize(pointdata[l],startX,min_y,max_y,200);
+              const path = simplifySvgPath(points, {precision: 5, tolerance: 15});
+              wholepath+=path;
+            }
+            
+            const model_input = tf.expandDims(tf.tensor(convert_svg_to_features(wholepath)));
+            const input_shape = model_input.length;
+            //console.log(model_input);
+            getPreds(model_input);
+            console.log(sequence);
+            console.log(get_latex(sequence));
+          } else{
+            console.log("Empty canvas.");
           }
-          let wholepath="";
-          for (let l=0;l<pointdata.length;l++){
-            //console.log(pointdata[l]);
-            const points=filterRepeats_Normalize(pointdata[l],startX,min_y,max_y,200);
-            const path = simplifySvgPath(points, {precision: 5, tolerance: 15});
-            wholepath+=path;
-          }
-          
-          const model_input = tf.expandDims(tf.tensor(convert_svg_to_features(wholepath)));
-          //model_input = tf.expandDims(tf.tensor(model_input));
-          const input_shape = model_input.length;
-          //console.log(model_input);
-          const preds=getPreds(model_input);
-          console.log(preds);
-          //console.log(getPreds(model_input));
         }} />
-        {/*<FeatureDataContext.Consumer>
-          {value => (
-          <Button title='Solve' onPress={() => {predict(value)}} />
-          )} 
-          </FeatureDataContext.Consumer>*/}
       </View>      
       
       <TextInput 
