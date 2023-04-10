@@ -10,9 +10,13 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@benjeau/react-native-draw": "^0.8.3",
+    "@expo/webpack-config": "^0.17.2",
+    "@nanopore/fast-ctc-decode": "^0.3.2",
     "@react-native-async-storage/async-storage": "~1.17.3",
+    "@react-native-firebase/app": "^17.4.2",
     "@tensorflow-models/mobilenet": "^2.1.0",
-    "@tensorflow/tfjs": "^4.1.0",
+    "@tensorflow/tfjs": "^3.11.0",
     "@tensorflow/tfjs-react-native": "^0.8.0",
     "algebrite": "^1.4.0",
     "convert-svg-to-png": "^0.6.4",
@@ -28,12 +32,16 @@
     "patch-package": "^6.5.0",
     "postinstall-postinstall": "^2.1.0",
     "react": "18.1.0",
+    "react-dom": "18.1.0",
     "react-native": "0.70.5",
+    "react-native-document-picker": "^8.2.0",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "~2.8.0",
+    "react-native-google-drive-api-wrapper": "^1.4.0",
     "react-native-mathjax": "^2.1.2",
     "react-native-svg": "13.4.0",
     "react-native-view-shot": "3.4.0",
+    "react-native-web": "~0.18.9",
     "react-native-webview": "^11.23.1"
   },
   "devDependencies": {
