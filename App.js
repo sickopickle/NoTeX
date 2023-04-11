@@ -27,7 +27,11 @@ import { ClearIcon } from './src/assets/clear_icon';
 import { EqualsIcon } from './src/assets/solve_icon';
 import { EraserIcon } from './src/assets/eraser_icon';
 import { PencilIcon } from './src/assets/pencil_icon';
-import { responsiveHeight, responsiveWidth } from './src/utils/ScalingUtils';
+import {
+  deviceWidth,
+  responsiveHeight,
+  responsiveWidth,
+} from './src/utils/ScalingUtils';
 //import * as ctc from '@nanopore/fast-ctc-decode';
 
 const parse_latex = (symbols, relations) => {
@@ -529,12 +533,12 @@ export default function App() {
     }
   };
   return (
-    <SafeAreaView /*style={styles.AndroidSafeArea}*/>
+    <SafeAreaView style={styles.parentContainer}>
       <Text style={styles.title}>Paperless</Text>
       <Canvas
         ref={canvasRef}
-        height={200}
-        width={800}
+        height={responsiveHeight(25)}
+        width={deviceWidth - responsiveWidth(10)}
         thickness={1}
         opacity={1}
         tool={currentTool}
@@ -643,20 +647,19 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  AndroidSafeArea: {
+  parentContainer: {
     flex: 1,
     backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingHorizontal: responsiveWidth(5),
+    paddingVertical: responsiveHeight(4),
   },
   canvas: {
     alignItems: 'center',
     justifyContent: 'space-around',
     //borderColor: 'black',
     //borderWidth: 2,
-    margin: 20,
-    marginHorizontal: 20,
+    // marginHorizontal: responsiveWidth(2),
+    marginVertical: responsiveHeight(1),
   },
   buttonContainer: {
     alignItems: 'center',
@@ -677,7 +680,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    alignItems: 'center',
+    textAlign: 'center',
+    width: '100%',
   },
   camera: {
     borderColor: 'black',
@@ -690,7 +694,6 @@ const styles = StyleSheet.create({
   },
   btn: {
     backgroundColor: 'white',
-    paddingHorizontal: responsiveWidth(3),
     paddingVertical: responsiveHeight(1),
   },
 });
