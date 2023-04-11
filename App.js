@@ -351,7 +351,7 @@ export default function App() {
     const collapseRepeats = true;
     const shape = [result.length()/149, 149];
     ctc.init('fast_ctc_decode_wasm_bg.wasm');*/
-    output = Array(result);
+    let output = Array(result);
     let max_prob = 0;
     let prev_idx = -1;
     let sequence = [];
