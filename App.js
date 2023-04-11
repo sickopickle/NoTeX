@@ -131,6 +131,7 @@ export default function App () {
     loadModel()
   }, []);
   const getPreds = async(input) => {
+    console.log(input.data());
     const result = await model.predict(input).data();
     const vocab = {0: 'Right',1: 'Sub',2: 'Sup',3: 'Inside',4: 'UTF',5: 'NTB',6: 'BTD',7: 'UFD',8: 'DFS',9: 'UFS', 10: 'OFI',11: 'DFS-NTB', 12: 'LB',13: 'UFL',14: 'STS',
     15: 'DTI',16: 'ITL',17: 'DFL',18: 'UFS-NTB',19: 'DFS-UFD',20: 'UFS-UFD',21: 'DFS-DFS',22: 'OFI-NTB',23: 'OFI-UFD',24: 'DFS-OFI',25: 'OFI-OFI',
@@ -156,7 +157,8 @@ export default function App () {
     const collapseRepeats = true;
     const shape = [result.length()/149, 149];
     ctc.init('fast_ctc_decode_wasm_bg.wasm');*/
-    output=Array(result);
+    const output=Array(result)[0];
+    
     let max_prob=0;
     let prev_idx = -1;
     let sequence = [];
@@ -242,11 +244,11 @@ export default function App () {
       }
       if (t>0) {      
         allSegmentData.push([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]);
-        allSegmentData.push([startPoints[0]-prevEnd[0], startPoints[1]-prevEnd[1], 0.0, 0.0, 0.0, 0.0, 0])
-        allSegmentData.push([0.0, 0.0, 0.0, 0,0, 0.0, 0.0, 0]);
+        allSegmentData.push([startPoints[0]-prevEnd[0], startPoints[1]-prevEnd[1], 0.0, 0.0, 0.0, 0.0, 0]);
+        allSegmentData.push([0, 0, 0, 0, 0, 0, 0]);
       }
       for (let curve of curves.slice(1)) {
-        let segmentData=[prevX,prevY,0,0,0,0,0,0];
+        let segmentData=[prevX,prevY,0,0,0,0,0];
         curve=curve.split(" ");
         for (let i=0;i<curve.length;i++) {
           let coords=curve[i].split(",");
@@ -271,7 +273,7 @@ export default function App () {
     allSegmentData.push([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]);
     allSegmentData.push([80.0, 100-prevEnd[1], 0.0, 0.0, 0.0, 0.0, 0]);
     allSegmentData.push([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]);
-    return allSegmentData
+    return allSegmentData;
   }
   const solve = () => {
     let eq;
@@ -335,7 +337,7 @@ export default function App () {
               const path = simplifySvgPath(points, {precision: 5, tolerance: 15});
               wholepath+=path;
             }
-            
+            console.log(wholepath);
             const model_input = tf.expandDims(tf.tensor(convert_svg_to_features(wholepath)));
             const input_shape = model_input.length;
             //console.log(model_input);
