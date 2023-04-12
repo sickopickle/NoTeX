@@ -32,6 +32,7 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from './src/utils/ScalingUtils';
+import { BLACK, WHITE } from './src/consts/colors';
 //import * as ctc from '@nanopore/fast-ctc-decode';
 
 const parse_latex = (symbols, relations) => {
@@ -396,6 +397,99 @@ export default function App() {
   const [vari, onChangeVar] = useState('x');
   const [expressionOutput, expOutput] = useState('');
   const [currentTool, onChangeTool] = useState('brush');
+  const [selectedBtn, setSelectedBtn] = useState('brush');
+
+  const actionButtons = [
+    {
+      label: 'undo',
+      icon: () => (
+        <UndoIcon height={responsiveWidth(8)} width={responsiveWidth(8)} />
+      ),
+      onPress: () => handleUndo(),
+      isSelected: false,
+    },
+    {
+      label: 'clear',
+      icon: () => (
+        <ClearIcon height={responsiveWidth(8)} width={responsiveWidth(8)} />
+      ),
+      onPress: () => handleClear(),
+      isSelected: false,
+    },
+    {
+      label: 'equals',
+      icon: () => (
+        <EqualsIcon height={responsiveWidth(8)} width={responsiveWidth(8)} />
+      ),
+      onPress: () => onPressSolveEquation(),
+      isSelected: false,
+    },
+    {
+      label: 'eraser',
+      icon: () => (
+        <EraserIcon height={responsiveWidth(8)} width={responsiveWidth(8)} />
+      ),
+      onPress: () => {
+        onChangeTool('eraser');
+        setSelectedBtn('eraser');
+      },
+      isSelected: selectedBtn === 'eraser',
+    },
+    {
+      label: 'brush',
+      icon: () => (
+        <PencilIcon height={responsiveWidth(8)} width={responsiveWidth(8)} />
+      ),
+      onPress: () => {
+        onChangeTool('brush');
+        setSelectedBtn('brush');
+      },
+      isSelected: selectedBtn === 'brush',
+    },
+  ];
+
+  const onPressSolveEquation = async () => {
+    if (getPaths().length) {
+      const pointdata = getPaths()[0].data;
+      const startX = pointdata[0][0][0];
+      let max_y = -1000,
+        min_y = 1000;
+      for (let i = 0; i < pointdata.length; i++) {
+        const stroke = pointdata[i];
+        for (let l = 0; l < stroke.length; l++) {
+          max_y = Math.max(stroke[l][1], max_y);
+          min_y = Math.min(stroke[l][1], min_y);
+        }
+      }
+      let wholepath = '';
+      for (let l = 0; l < pointdata.length; l++) {
+        //console.log(pointdata[l]);
+        const points = filterRepeats_Normalize(
+          pointdata[l],
+          startX,
+          min_y,
+          max_y,
+          200
+        );
+        const path = simplifySvgPath(points, {
+          precision: 5,
+          tolerance: 15,
+        });
+        wholepath += path;
+      }
+
+      const model_input = tf.expandDims(
+        tf.tensor(convert_svg_to_features(wholepath))
+      );
+      const input_shape = model_input.length;
+      //console.log(model_input);
+      getPreds(model_input);
+      console.log('s', sequence);
+      console.log('latex', get_latex(sequence));
+    } else {
+      console.log('Empty canvas.');
+    }
+  };
 
   const filterRepeats_Normalize = (
     points,
@@ -546,82 +640,21 @@ export default function App() {
       />
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleUndo} style={styles.btn}>
-          <UndoIcon height={responsiveWidth(8)} width={responsiveWidth(8)} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleClear} style={styles.btn}>
-          <ClearIcon height={responsiveWidth(8)} width={responsiveWidth(8)} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={async () => {
-            if (getPaths().length) {
-              const pointdata = getPaths()[0].data;
-              const startX = pointdata[0][0][0];
-              let max_y = -1000,
-                min_y = 1000;
-              for (let i = 0; i < pointdata.length; i++) {
-                const stroke = pointdata[i];
-                for (let l = 0; l < stroke.length; l++) {
-                  max_y = Math.max(stroke[l][1], max_y);
-                  min_y = Math.min(stroke[l][1], min_y);
-                }
-              }
-              let wholepath = '';
-              for (let l = 0; l < pointdata.length; l++) {
-                //console.log(pointdata[l]);
-                const points = filterRepeats_Normalize(
-                  pointdata[l],
-                  startX,
-                  min_y,
-                  max_y,
-                  200
-                );
-                const path = simplifySvgPath(points, {
-                  precision: 5,
-                  tolerance: 15,
-                });
-                wholepath += path;
-              }
-
-              const model_input = tf.expandDims(
-                tf.tensor(convert_svg_to_features(wholepath))
-              );
-              const input_shape = model_input.length;
-              //console.log(model_input);
-              getPreds(model_input);
-              console.log('s', sequence);
-              console.log('latex', get_latex(sequence));
-            } else {
-              console.log('Empty canvas.');
-            }
-          }}
-        >
-          <EqualsIcon height={responsiveWidth(8)} width={responsiveWidth(8)} />
-        </TouchableOpacity>
-        {currentTool === 'brush' ? (
-          <TouchableOpacity
-            onPress={() => onChangeTool('eraser')}
-            style={styles.btn}
-          >
-            <EraserIcon
-              height={responsiveWidth(8)}
-              width={responsiveWidth(8)}
-            />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={() => onChangeTool('brush')}
-            style={styles.btn}
-          >
-            <PencilIcon
-              height={responsiveWidth(8)}
-              width={responsiveWidth(8)}
-            />
-          </TouchableOpacity>
-        )}
+        {actionButtons.map((action, index) => {
+          return (
+            <TouchableOpacity
+              key={index}
+              onPress={() => {
+                action.onPress();
+              }}
+              style={styles.btn(action?.isSelected)}
+            >
+              {action.icon()}
+            </TouchableOpacity>
+          );
+        })}
       </View>
-
+      <View style={styles.divider} />
       <TextInput
         style={styles.input}
         onChangeText={onChangeType}
@@ -665,7 +698,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: responsiveWidth(4),
     marginBottom: responsiveHeight(1),
   },
   container: {
@@ -673,10 +705,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   input: {
-    borderColor: 'black',
+    borderColor: BLACK,
   },
   text: {
-    borderColor: 'black',
+    borderColor: BLACK,
   },
   title: {
     fontSize: 30,
@@ -684,7 +716,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   camera: {
-    borderColor: 'black',
+    borderColor: BLACK,
     height: 700,
     alignItems: 'center',
   },
@@ -692,8 +724,19 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     flex: 1,
   },
-  btn: {
-    backgroundColor: 'white',
+  btn: (isSelected) => ({
+    backgroundColor: WHITE,
     paddingVertical: responsiveHeight(1),
+    borderWidth: isSelected ? 1 : 0,
+    borderColor: BLACK,
+    paddingHorizontal: responsiveWidth(2),
+  }),
+  divider: {
+    height: 1,
+    width: '100%',
+    borderBottomColor: BLACK,
+    borderBottomWidth: 1,
+    marginTop: responsiveHeight(1),
+    marginBottom: responsiveHeight(2),
   },
 });
