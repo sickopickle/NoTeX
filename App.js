@@ -105,52 +105,7 @@ const parse_latex = (symbols, relations) => {
   latex_string += '}'.repeat(open_brackets);
   //latex_string+=("}")*open_brackets
   return latex_string;
-};
-const parse_traces = (tolerance = 15, precision_a = 5, precision_b = 250) => {
-  a = [];
-  first = true;
-  prevEnd = null;
-  //mins=tf.math.reduce_min(tf.ragged.constant(list_points), axis=(0,1))
-  //maxs=tf.math.reduce_max(tf.ragged.constant(list_points), axis=(0,1))
-  //min_y=float(mins[1])
-  //max_y=float(maxs[1])
-  for (points of list_points) {
-    points = filterRepeats_Normalize(
-      points,
-      list_points[0][0][0],
-      min_y,
-      max_y,
-      precision_b
-    );
-    features = getData(points, options(False, tolerance, precision_a));
-    if (first) {
-      a.push([[20.0, precision_b / 2 - features[1][1], 0.0, 0.0, 0.0, 0.0, 0]]);
-      a.push([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]]);
-    } else {
-      dx = features[1][0] - prevEnd[0];
-      dy = features[1][1] - prevEnd[1];
-      a.push([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1]]);
-      a.push([[dx, dy, 0.0, 0.0, 0.0, 0.0, 0]]);
-      a.push([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1]]);
-      a.push([
-        [
-          dx,
-          dy,
-          Math.sqrt(dx ** 2 / 9 + dy ** 2 / 9),
-          Math.sqrt(dx ** 2 / 9 + dy ** 2 / 9),
-          0.0,
-          0.0,
-          0,
-        ],
-      ]);
-    }
-    a.push(features[0]);
-    prevEnd = features[2];
-    first = False;
-  }
-  a.push([[20.0, precision_b / 2 - prevEnd[1], 0.0, 0.0, 0.0, 0.0, 0]]);
-  return a;
-};
+}; 
 const convert_sequence = (sequence) => {
   return [
     sequence.filter((element, index) => {
@@ -340,20 +295,9 @@ export default function App() {
       146: '|',
       147: 'EOS',
     };
-    /*const alphabet = ["Right", "Sub", "Sup", "Inside", "UTF", "NTB", "BTD", "UFD", "DFS", "UFS", "OFI", "DFS-NTB", "LB",'UFL','STS','DTI','ITL','DFL','UFS-NTB','DFS-UFD','UFS-UFD','DFS-DFS','OFI-NTB',
-    'OFI-UFD','DFS-OFI','OFI-OFI','UFD-DFS','Sup-UTF','UFS-UTF','UFL-UTF','Inside-UTF','UFD-OFI','DFS-OFI-UFD','NTB-UTF','UFS-UFS','DFL-UTF','UFD-UFD',
-    'UFS-OFI','UFS-DFS','Radical','RTI','RTI-UTF','Radical-UTF','!','(',')','+','-','frac','.','/','0','1','2','3','4','5','6','7','8','9',
-    '<','=','>','A','B','C','COMMA','E','F','G','H','I','L','M','N','P','R','S','T','V','X','Y','[','\\Delta','\\alpha','\\beta','\\cos','\\div',
-    '\\exists','\\forall','\\gamma','\\geq','\\gt','\\in','\\infty','\\int','\\lambda','\\ldots','\\leq','\\lim','\\log','\\lt','\\mu','\\neq',
-    '\\phi','\\pi','\\pm','\\prime','\\rightarrow','\\sigma','\\sin','\\sqrt','\\sum','\\tan','\\theta','\\times','\\{','\\}',']','a','b',
-    'c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','|','EOS','BLANK'];
-    const beamSize = 100;
-    const beamCutThreshold = Number(0.0).toPrecision(2);
-    const collapseRepeats = true;
-    const shape = [result.length()/149, 149];
-    ctc.init('fast_ctc_decode_wasm_bg.wasm');*/
-    let output = Array(result);
-    let max_prob = 0;
+    const output=Array(result)[0];
+    
+    let max_prob=0;
     let prev_idx = -1;
     let sequence = [];
     let symbol_idx = 0;
@@ -549,24 +493,16 @@ export default function App() {
       }
       if (t > 0) {
         allSegmentData.push([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]);
-        allSegmentData.push([
-          startPoints[0] - prevEnd[0],
-          startPoints[1] - prevEnd[1],
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0,
-        ]);
-        allSegmentData.push([0.0, 0.0, 0.0, 0, 0, 0.0, 0.0, 0]);
+        allSegmentData.push([startPoints[0]-prevEnd[0], startPoints[1]-prevEnd[1], 0.0, 0.0, 0.0, 0.0, 0]);
+        allSegmentData.push([0, 0, 0, 0, 0, 0, 0]);
       }
       for (let curve of curves.slice(1)) {
-        let segmentData = [prevX, prevY, 0, 0, 0, 0, 0, 0];
-        curve = curve.split(' ');
-        for (let i = 0; i < curve.length; i++) {
-          let coords = curve[i].split(',');
-          segmentData[2 + i * 2] = Number(coords[0]) + prevX;
-          segmentData[3 + i * 2] = Number(coords[1]) + prevY;
+        let segmentData=[prevX,prevY,0,0,0,0,0];
+        curve=curve.split(" ");
+        for (let i=0;i<curve.length;i++) {
+          let coords=curve[i].split(",");
+          segmentData[2+i*2]=Number(coords[0])+prevX;
+          segmentData[3+i*2]=Number(coords[1])+prevY;
         }
         const features = [
           segmentData[6] - segmentData[0],
