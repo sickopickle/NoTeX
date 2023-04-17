@@ -20,6 +20,7 @@ require('nerdamer/Calculus');
 require('nerdamer/Solve');
 require('nerdamer/Extra');
 
+import MathView, { MathText } from 'react-native-math-view';
 import { Canvas } from '@benjeau/react-native-draw';
 import simplifySvgPath from '@luncheon/simplify-svg-path';
 import { UndoIcon } from './src/assets/undo_icon';
@@ -36,11 +37,21 @@ import { BLACK, WHITE } from './src/consts/colors';
 //import * as ctc from '@nanopore/fast-ctc-decode';
 
 const parse_latex = (symbols, relations) => {
+  const isLetter = (str) => {
+    return str.length === 1 && str.match(/[a-z]/i);
+  }
   let utf = 0;
   let open_brackets = 0;
+  let variable;
   let latex_string = symbols[0];
+  if (isLetter(latex_string)){
+    variable=latex_string;
+  }
   for (let i = 0; i < relations.length; i++) {
     let s = symbols[i + 1];
+    if (isLetter(s)) {
+      variable=s;
+    }
     const full_rel = relations[i];
     let split_rel = full_rel.split('-');
     let add_symbol = true;
@@ -104,7 +115,7 @@ const parse_latex = (symbols, relations) => {
   }
   latex_string += '}'.repeat(open_brackets);
   //latex_string+=("}")*open_brackets
-  return latex_string;
+  return [latex_string, variable];
 }; 
 const convert_sequence = (sequence) => {
   return [
@@ -118,12 +129,10 @@ const convert_sequence = (sequence) => {
 };
 const get_latex = (sequence) => {
   const converted_sequence = convert_sequence(sequence);
-  console.log(converted_sequence);
   return parse_latex(converted_sequence[1], converted_sequence[0]);
 };
 
 export default function App() {
-  const [result, setResult] = useState('Ans');
   const [model, setModel] = useState('');
   const [sequence, setSequence] = useState([]);
   useEffect(() => {
@@ -213,7 +222,7 @@ export default function App() {
       64: 'A',
       65: 'B',
       66: 'C',
-      67: 'COMMA',
+      67: ',',
       68: 'E',
       69: 'F',
       70: 'G',
@@ -314,18 +323,22 @@ export default function App() {
         max_prob = output[i];
       }
     }
-    setSequence(sequence);
+    const expression = get_latex(sequence);
+    setExpOutput(expression[0]);
+    solve(expression[0], expression[1]);
   };
-
-  const picRef = useRef();
 
   const canvasRef = useRef(null);
 
   const handleUndo = () => {
+    setExpOutput('');
+    setSolutionOutput('');
     canvasRef.current?.undo();
   };
 
   const handleClear = () => {
+    setExpOutput('');
+    setSolutionOutput('');
     canvasRef.current?.clear();
   };
   const getPaths = () => canvasRef.current?.getPaths();
@@ -336,10 +349,8 @@ export default function App() {
   //  console.log(canvasRef.current?.getFeatures());
   //}
 
-  const [type, onChangeType] = useState('solve');
-  const [math, onChangeText] = useState('5x=5');
-  const [vari, onChangeVar] = useState('x');
-  const [expressionOutput, expOutput] = useState('');
+  const [expressionOutput, setExpOutput] = useState('');
+  const [solutionOutput, setSolutionOutput] = useState('');
   const [currentTool, onChangeTool] = useState('brush');
   const [selectedBtn, setSelectedBtn] = useState('brush');
 
@@ -427,9 +438,7 @@ export default function App() {
       );
       const input_shape = model_input.length;
       //console.log(model_input);
-      getPreds(model_input);
-      console.log('s', sequence);
-      console.log('latex', get_latex(sequence));
+      await getPreds(model_input);
     } else {
       console.log('Empty canvas.');
     }
@@ -546,25 +555,28 @@ export default function App() {
     allSegmentData.push([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0]);
     return allSegmentData;
   };
-  const solve = () => {
+  const solve = (math, vari) => {
     let eq;
+    if (!vari) {
+      vari='x';
+    }
+    console.log(vari);
+    math = nerdamer.convertFromLaTeX(math);
     try {
-      eq = nerdamer(type + '(' + math + ',' + vari + ')').toTeX();
+      eq = nerdamer('solve(' + math + ',' + vari + ')').toTeX();
     } catch (err) {
-      eq = 'invalid';
+      try {
+        eq = nerdamer('simplify(' + math + ',' + vari + ')').toTeX();
+      } catch (err) {
+        eq = null;
+      }
     }
-    expOutput('$' + eq + '$');
-  };
-  const toolTitle = (current) => {
-    if (current == 'brush') {
-      return 'Eraser';
-    } else {
-      return 'Brush';
-    }
+    console.log(eq);
+    setSolutionOutput(eq);
   };
   return (
     <SafeAreaView style={styles.parentContainer}>
-      <Text style={styles.title}>Paperless</Text>
+      <Text style={styles.title}>NoTeX</Text>
       <Canvas
         ref={canvasRef}
         height={responsiveHeight(25)}
@@ -591,7 +603,7 @@ export default function App() {
         })}
       </View>
       <View style={styles.divider} />
-      <TextInput
+      {/*<TextInput
         style={styles.input}
         onChangeText={onChangeType}
         onSubmitEditing={solve}
@@ -609,8 +621,19 @@ export default function App() {
         onSubmitEditing={solve}
         value={vari}
       />
-      <MathJax html={`Answer{ ${expressionOutput}`} />
-      <Text>{result}</Text>
+      <MathJax html={`Answer{ ${expressionOutput}`} />*/}
+      <MathView
+        math={`\\text{Expression: }${expressionOutput}`}     
+        config={{ ex: 30, em: 30}}
+      />
+      <Text>  
+      </Text>
+      <Text>
+      </Text>
+      <MathView
+        math={solutionOutput ? `\\text{Solution: }${solutionOutput}` : "\\text{Solution: None}"}
+        config={{ex: 30}}
+      />
     </SafeAreaView>
   );
 }
@@ -635,6 +658,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: responsiveHeight(1),
+    marginHorizontal: responsiveWidth(3)
   },
   container: {
     flex: 1,
@@ -663,16 +687,16 @@ const styles = StyleSheet.create({
   btn: (isSelected) => ({
     backgroundColor: WHITE,
     paddingVertical: responsiveHeight(1),
-    borderWidth: isSelected ? 1 : 0,
+    borderWidth: isSelected ? 3 : 0,
     borderColor: BLACK,
-    paddingHorizontal: responsiveWidth(2),
+    paddingHorizontal: responsiveWidth(3),
   }),
   divider: {
     height: 1,
     width: '100%',
     borderBottomColor: BLACK,
-    borderBottomWidth: 1,
-    marginTop: responsiveHeight(1),
-    marginBottom: responsiveHeight(2),
+    borderBottomWidth: 5,
+    marginTop: responsiveHeight(3),
+    marginBottom: responsiveHeight(4),
   },
 });
