@@ -557,21 +557,21 @@ export default function App() {
   };
   const solve = (math, vari) => {
     let eq;
-    if (!vari) {
-      vari='x';
-    }
     console.log(vari);
     math = nerdamer.convertFromLaTeX(math);
-    try {
-      eq = nerdamer('solve(' + math + ',' + vari + ')').toTeX();
-    } catch (err) {
+    if (vari) {
       try {
-        eq = nerdamer('simplify(' + math + ',' + vari + ')').toTeX();
-      } catch (err) {
-        eq = null;
+        eq = nerdamer('solve(' + math + ',' + vari + ')').toTeX();
+      } catch(err) {
+        try {
+          eq = nerdamer('simplify(' + math + ',' + vari + ')').toTeX();
+        } catch(err) {
+          eq=null;
+        }
       }
+    } else {
+      eq = nerdamer('simplify(' + math + ',' + vari + ')').toTeX();
     }
-    console.log(eq);
     setSolutionOutput(eq);
   };
   return (
@@ -631,7 +631,7 @@ export default function App() {
       <Text>
       </Text>
       <MathView
-        math={solutionOutput ? `\\text{Solution: }${solutionOutput}` : "\\text{Solution: None}"}
+        math={solutionOutput && solutionOutput!='$[]$' ? `\\text{Solution: }${solutionOutput}` : "\\text{Solution: None}"}
         config={{ex: 30}}
       />
     </SafeAreaView>
